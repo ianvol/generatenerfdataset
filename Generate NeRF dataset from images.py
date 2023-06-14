@@ -1,0 +1,60 @@
+import numpy as np
+from PIL import Image
+import os
+from tkinter import Tk, filedialog
+from tkinter import messagebox
+
+# Create a Tkinter root window
+root = Tk()
+root.withdraw()
+
+# Display a popup message
+messagebox.showinfo("NeRF Dataset Generator", "Takes a set of images and generates a NeRF dataset with poses, focal length (default value used), and image shape.")
+
+# Prompt the user to select the image files
+image_files = filedialog.askopenfilenames(title="Select Image Files", filetypes=(("JPEG Files", "*.jpg"), ("PNG Files", "*.png")))
+image_filenames = sorted(image_files)
+
+default_focal_length = 50.0  # Replace with your desired default focal length
+max_image_size = (1024, 1024)  # Maximum width and height for resizing
+
+def generate_poses(num_images):
+    # Replace this with your own method to generate poses
+    poses = []
+    for _ in range(num_images):
+        pose = np.random.random(7)  # Generate a random pose
+        poses.append(pose)
+    return poses
+
+poses = generate_poses(len(image_filenames))
+
+images = []
+heights = []
+widths = []
+for file in image_files:
+    with open(file, "rb") as image_file:
+        image = Image.open(image_file)
+        # Preprocess the image as desired (e.g., resize, crop, normalize, etc.)
+        image.thumbnail(max_image_size)
+        images.append(image)
+        heights.append(image.height)
+        widths.append(image.width)
+
+poses = np.array(poses)
+images = np.array([np.array(image) for image in images])
+heights = np.array(heights)
+widths = np.array(widths)
+
+focal = np.full(len(image_filenames), default_focal_length)
+
+# Prompt the user to select the save path and dataset name for the dataset
+save_path = filedialog.asksaveasfilename(title="Save NeRF Dataset", defaultextension=".npz")
+
+if save_path:
+    save_path = os.path.abspath(save_path)  # Convert to absolute path to handle Unicode characters
+    dataset_name = os.path.splitext(os.path.basename(save_path))[0]
+    np.savez(save_path, poses=poses, images=images, focal=focal, heights=heights, widths=widths)
+    messagebox.showinfo("NeRF Dataset Saved", f"NeRF dataset '{dataset_name}' saved successfully.")
+
+else:
+    messagebox.showinfo("NeRF Dataset Generation", "Dataset generation canceled.")
